@@ -29,7 +29,7 @@ def get_schema_dict(conn_url: str) -> dict[str, list[str]]:
             return cached_data
 
     schema: dict[str, list[str]] = {}
-    with psycopg.connect(conn_url, row_factory=dict_row) as conn:
+    with psycopg.connect(conn_url, row_factory=dict_row, connect_timeout=3) as conn:
         with conn.cursor() as cur:
             cur.execute(_SCHEMA_QUERY)
             for row in cur.fetchall():

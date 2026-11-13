@@ -29,10 +29,12 @@ def main():
     from src.eval.metrics import compute_metrics, result_sets_equal
 
     conn_url = args.conn_url or get_readonly_conn_url()
+    db_available = True
     try:
         schema_text = get_schema_text(conn_url)
         known_tables = get_known_tables(conn_url)
     except Exception as exc:
+        db_available = False
         print(f"Notice: Database connection not available ({exc}). Loading static schema description.")
         desc_path = Path("data/demo_db/schema_description.txt")
         schema_text = desc_path.read_text(encoding="utf-8") if desc_path.exists() else "DVD rental schema"
@@ -89,6 +91,10 @@ def main():
                     result["valid_sql"] = False
                     result["correct"] = False
                     result["error"] = f"blocked: {guard_result.reason}"
+                elif not db_available:
+                    result["valid_sql"] = False
+                    result["correct"] = False
+                    result["error"] = "Database offline (run 'docker compose up -d db' to start PostgreSQL)"
                 else:
                     try:
                         _, pred_rows = execute_query(guard_result.sql, conn_url)

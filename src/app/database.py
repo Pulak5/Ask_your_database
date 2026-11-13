@@ -43,6 +43,7 @@ def execute_query(
     sql: str,
     conn_url: str,
     timeout_seconds: int = 5,
+    connect_timeout: int = 3,
 ) -> tuple[list[str], list[dict[str, Any]]]:
     """Execute SQL query safely with statement timeout.
 
@@ -50,7 +51,7 @@ def execute_query(
         (column_names, list_of_row_dicts)
     """
     timeout_ms = timeout_seconds * 1000
-    with psycopg.connect(conn_url, row_factory=dict_row) as conn:
+    with psycopg.connect(conn_url, row_factory=dict_row, connect_timeout=connect_timeout) as conn:
         with conn.cursor() as cur:
             # Set per-query statement timeout
             cur.execute(f"SET LOCAL statement_timeout = {int(timeout_ms)}")
