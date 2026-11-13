@@ -1,0 +1,140 @@
+Database: DVD Rental Store (Pagila PostgreSQL subset)
+
+## Tables and Columns
+
+### Table: country
+Lookup table of countries.
+- country_id (smallint, PRIMARY KEY): Unique identifier for the country.
+- country (varchar(50)): Country name.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: city
+Lookup table of cities.
+- city_id (integer, PRIMARY KEY): Unique identifier for the city.
+- city (varchar(50)): City name.
+- country_id (smallint, FOREIGN KEY -> country.country_id): ID of the country this city belongs to.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: address
+Physical street addresses of customers, staff, and stores.
+- address_id (integer, PRIMARY KEY): Unique identifier for the address.
+- address (varchar(50)): Street address line 1.
+- address2 (varchar(50)): Street address line 2 (optional).
+- district (varchar(20)): Region, state, or district.
+- city_id (smallint, FOREIGN KEY -> city.city_id): ID of the city.
+- postal_code (varchar(10)): Postal or ZIP code.
+- phone (varchar(20)): Contact phone number.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: language
+Spoken languages of films.
+- language_id (smallint, PRIMARY KEY): Unique identifier for the language.
+- name (varchar(20)): Language name (e.g., English, French, Japanese).
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: category
+Film genre categories.
+- category_id (smallint, PRIMARY KEY): Unique identifier for the category.
+- name (varchar(25)): Category name (e.g., Action, Animation, Comedy, Drama, Sci-Fi).
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: film
+The movie catalog.
+- film_id (integer, PRIMARY KEY): Unique identifier for the film.
+- title (varchar(255)): Movie title.
+- description (text): Overview or synopsis of the film.
+- release_year (integer): Release year (e.g., 2006).
+- language_id (smallint, FOREIGN KEY -> language.language_id): Audio language of the film.
+- original_language_id (smallint, FOREIGN KEY -> language.language_id): Original audio language if dubbed.
+- rental_rate (numeric(3,2)): Cost to rent the film (e.g., 2.99, 4.99).
+- length (smallint): Duration of the movie in minutes.
+- rating (varchar(5)): MPAA rating (G, PG, PG-13, R, NC-17).
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: film_category
+Many-to-many junction linking films to genre categories.
+- film_id (integer, FOREIGN KEY -> film.film_id): Film ID.
+- category_id (smallint, FOREIGN KEY -> category.category_id): Category ID.
+- last_update (timestamp): Timestamp of last modification.
+PRIMARY KEY: (film_id, category_id)
+
+### Table: actor
+Actors who appear in films.
+- actor_id (smallint, PRIMARY KEY): Unique identifier for the actor.
+- first_name (varchar(45)): Actor's first name.
+- last_name (varchar(45)): Actor's last name.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: film_actor
+Many-to-many junction linking films to actors.
+- actor_id (smallint, FOREIGN KEY -> actor.actor_id): Actor ID.
+- film_id (integer, FOREIGN KEY -> film.film_id): Film ID.
+- last_update (timestamp): Timestamp of last modification.
+PRIMARY KEY: (actor_id, film_id)
+
+### Table: store
+Physical store branches.
+- store_id (smallint, PRIMARY KEY): Unique identifier for the store.
+- manager_staff_id (integer, FOREIGN KEY -> staff.staff_id): Staff member managing the store.
+- address_id (smallint, FOREIGN KEY -> address.address_id): Physical address of the store.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: staff
+Employees working at retail stores.
+- staff_id (smallint, PRIMARY KEY): Unique identifier for the employee.
+- first_name (varchar(45)): Employee first name.
+- last_name (varchar(45)): Employee last name.
+- address_id (smallint, FOREIGN KEY -> address.address_id): Employee home address.
+- email (varchar(50)): Employee email address.
+- store_id (smallint, FOREIGN KEY -> store.store_id): Store where employee works.
+- active (boolean): Whether employee is currently employed.
+- username (varchar(16)): System login username.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: customer
+Registered store patrons who rent films.
+- customer_id (integer, PRIMARY KEY): Unique identifier for the customer.
+- store_id (smallint, FOREIGN KEY -> store.store_id): Customer's primary home store.
+- first_name (varchar(45)): Customer first name.
+- last_name (varchar(45)): Customer last name.
+- email (varchar(50)): Customer email address.
+- address_id (smallint, FOREIGN KEY -> address.address_id): Customer address.
+- active (boolean): Whether customer account is active.
+- create_date (timestamp): Account creation timestamp.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: inventory
+Physical DVD inventory copies held at store locations.
+- inventory_id (integer, PRIMARY KEY): Unique identifier for the inventory copy.
+- film_id (integer, FOREIGN KEY -> film.film_id): Which movie this disc is.
+- store_id (smallint, FOREIGN KEY -> store.store_id): Store where this disc is currently stocked.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: rental
+Customer rental transactions for physical inventory items.
+- rental_id (integer, PRIMARY KEY): Unique identifier for the rental transaction.
+- rental_date (timestamp): Date and time the DVD was rented out.
+- inventory_id (integer, FOREIGN KEY -> inventory.inventory_id): Specific disc rented.
+- customer_id (integer, FOREIGN KEY -> customer.customer_id): Customer who rented the disc.
+- return_date (timestamp): Date and time the DVD was returned (NULL if not yet returned).
+- staff_id (integer, FOREIGN KEY -> staff.staff_id): Employee who processed checkout.
+- last_update (timestamp): Timestamp of last modification.
+
+### Table: payment
+Monetary customer payments for rentals.
+- payment_id (bigint, PRIMARY KEY): Unique identifier for the payment.
+- customer_id (integer, FOREIGN KEY -> customer.customer_id): Customer making payment.
+- rental_id (integer, FOREIGN KEY -> rental.rental_id): Associated rental transaction.
+- amount (numeric(5,2)): Payment amount in dollars (e.g., 4.99).
+- payment_date (timestamp): Date and time payment was recorded.
+- last_update (timestamp): Timestamp of last modification.
+
+## Common Join Hints
+- Film genre: film JOIN film_category USING (film_id) JOIN category USING (category_id)
+- Film actors: film JOIN film_actor USING (film_id) JOIN actor USING (actor_id)
+- Film rental history: film JOIN inventory USING (film_id) JOIN rental USING (inventory_id)
+- Customer payments: customer JOIN payment USING (customer_id)
+- Rental payments: rental JOIN payment USING (rental_id)
+- Customer full address: customer JOIN address USING (address_id) JOIN city USING (city_id) JOIN country USING (country_id)
+- Film inventory locations: inventory JOIN store USING (store_id) JOIN film USING (film_id)
+

@@ -1,0 +1,42 @@
+# LoRA Fine-Tuning Configuration for Qwen2.5-Coder-7B-Instruct
+# Ask Your Database — Text-to-SQL Analytics Assistant
+
+model_name: "Qwen/Qwen2.5-Coder-7B-Instruct"
+output_dir: "./outputs"
+
+lora:
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  bias: "none"
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+training:
+  num_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  max_length: 2048
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+  save_steps: 100
+  eval_steps: 100
+  logging_steps: 10
+  save_total_limit: 3
+  bf16: true
+  fp16: false
+  seed: 15
+  weight_decay: 0.01
+
+data:
+  train_file: "data/train/train.jsonl"
+  val_file: "data/train/val.jsonl"
+
